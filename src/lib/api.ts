@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { mockApi, shouldUseMockApi } from './mockApi';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -36,5 +37,39 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+// Create a proxy that uses mock API when enabled
+const createApiProxy = () => {
+  if (shouldUseMockApi()) {
+    console.log('🔧 Using Mock API mode - backend not required');
+    return {
+      get: async (url: string, config?: any) => {
+        if (url === '/proposals') return mockApi.getProposals();
+        if (url.startsWith('/proposals/')) {
+          const id = url.split('/proposals/')[1];
+          return mockApi.getProposal(id);
+        }
+        if (url === '/templates') return mockApi.getTemplates();
+        throw new Error(`Mock API: GET ${url} not implemented`);
+      },
+      post: async (url: string, data?: any, config?: any) => {
+        if (url === '/auth/register') return mockApi.register(data);
+        if (url === '/auth/login') return mockApi.login(data);
+        if (url === '/proposals') return mockApi.createProposal(data);
+        if (url === '/ai/generate-proposal') return mockApi.generateProposal(data);
+        if (url === '/templates') return mockApi.createTemplate(data);
+        throw new Error(`Mock API: POST ${url} not implemented`);
+      },
+      put: async (url: string, data?: any, config?: any) => {
+        if (url === '/me') return mockApi.updateProfile(data);
+        throw new Error(`Mock API: PUT ${url} not implemented`);
+      },
+      delete: async (url: string, config?: any) => {
+        throw new Error(`Mock API: DELETE ${url} not implemented`);
+      },
+    };
+  }
+  return api;
+};
+
+export default createApiProxy();
 

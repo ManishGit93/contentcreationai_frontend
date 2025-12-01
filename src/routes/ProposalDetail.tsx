@@ -12,14 +12,57 @@ interface Proposal {
   clientName: string;
   clientCompany?: string;
   projectTitle: string;
-  scopeOfWork: string;
-  deliverables: string;
-  timeline: string;
-  pricing: string;
-  terms: string;
+  scopeOfWork: string | object;
+  deliverables: string | object;
+  timeline: string | object;
+  pricing: string | object;
+  terms: string | object;
   status: 'draft' | 'sent';
   createdAt: string;
 }
+
+// Helper function to convert objects to readable strings
+const formatSectionContent = (content: string | object): string => {
+  if (typeof content === 'string') {
+    return content;
+  }
+  
+  if (typeof content === 'object' && content !== null) {
+    // Handle timeline object with {start, mid, end}
+    if ('start' in content && 'mid' in content && 'end' in content) {
+      return `# Timeline & Milestones
+
+## Project Start
+${(content as any).start || 'N/A'}
+
+## Mid-Project Milestones
+${(content as any).mid || 'N/A'}
+
+## Project Completion
+${(content as any).end || 'N/A'}`;
+    }
+    
+    // Handle pricing object with {totalCost, paymentTerms}
+    if ('totalCost' in content || 'paymentTerms' in content) {
+      const pricing = content as any;
+      return `# Pricing Breakdown
+
+## Total Cost
+${pricing.totalCost || 'To be discussed'}
+
+## Payment Terms
+${pricing.paymentTerms || 'Standard payment terms apply'}
+
+${pricing.breakdown ? `## Cost Breakdown\n${pricing.breakdown}` : ''}
+${pricing.notes ? `## Additional Notes\n${pricing.notes}` : ''}`;
+    }
+    
+    // Generic object - convert to formatted string
+    return JSON.stringify(content, null, 2);
+  }
+  
+  return String(content || '');
+};
 
 export const ProposalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -55,19 +98,19 @@ PROPOSAL: ${proposal.projectTitle}
 Client: ${proposal.clientName}${proposal.clientCompany ? ` (${proposal.clientCompany})` : ''}
 
 SCOPE OF WORK
-${proposal.scopeOfWork}
+${formatSectionContent(proposal.scopeOfWork)}
 
 DELIVERABLES
-${proposal.deliverables}
+${formatSectionContent(proposal.deliverables)}
 
 TIMELINE & MILESTONES
-${proposal.timeline}
+${formatSectionContent(proposal.timeline)}
 
 PRICING BREAKDOWN
-${proposal.pricing}
+${formatSectionContent(proposal.pricing)}
 
 TERMS & CONDITIONS
-${proposal.terms}
+${formatSectionContent(proposal.terms)}
     `.trim();
     navigator.clipboard.writeText(fullText);
     // You could add a toast notification here
@@ -85,23 +128,23 @@ ${proposal.terms}
 
 ## Scope of Work
 
-${proposal.scopeOfWork}
+${formatSectionContent(proposal.scopeOfWork)}
 
 ## Deliverables
 
-${proposal.deliverables}
+${formatSectionContent(proposal.deliverables)}
 
 ## Timeline & Milestones
 
-${proposal.timeline}
+${formatSectionContent(proposal.timeline)}
 
 ## Pricing Breakdown
 
-${proposal.pricing}
+${formatSectionContent(proposal.pricing)}
 
 ## Terms & Conditions
 
-${proposal.terms}
+${formatSectionContent(proposal.terms)}
 `;
   };
 
@@ -186,14 +229,17 @@ ${proposal.terms}
           { title: 'Timeline & Milestones', content: proposal.timeline, key: 'timeline' },
           { title: 'Pricing Breakdown', content: proposal.pricing, key: 'pricing' },
           { title: 'Terms & Conditions', content: proposal.terms, key: 'terms' },
-        ].map((section) => (
-          <Card key={section.key}>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">{section.title}</h3>
-            <div className="prose max-w-none">
-              <p className="text-gray-700 whitespace-pre-wrap">{section.content}</p>
-            </div>
-          </Card>
-        ))}
+        ].map((section) => {
+          const formattedContent = formatSectionContent(section.content);
+          return (
+            <Card key={section.key}>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">{section.title}</h3>
+              <div className="prose max-w-none">
+                <p className="text-gray-700 whitespace-pre-wrap">{formattedContent}</p>
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
       <Modal

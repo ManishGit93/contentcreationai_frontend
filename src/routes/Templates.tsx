@@ -32,10 +32,25 @@ export const Templates: React.FC = () => {
   const fetchTemplates = async () => {
     try {
       const response = await api.get('/templates');
-      setTemplates(response.data);
+      // Handle different response structures
+      let templatesData = response.data;
+      
+      // If response.data is an object with a templates/data/items property
+      if (templatesData && typeof templatesData === 'object' && !Array.isArray(templatesData)) {
+        templatesData = templatesData.templates || templatesData.data || templatesData.items || [];
+      }
+      
+      // Ensure it's an array
+      if (!Array.isArray(templatesData)) {
+        console.warn('Expected array but got:', templatesData);
+        templatesData = [];
+      }
+      
+      setTemplates(templatesData);
     } catch (err: any) {
       setError('Failed to load templates');
-      console.error(err);
+      console.error('Error fetching templates:', err);
+      setTemplates([]); // Set empty array on error
     } finally {
       setIsLoading(false);
     }

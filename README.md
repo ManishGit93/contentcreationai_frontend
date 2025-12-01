@@ -19,9 +19,21 @@ npm install
 ```
 
 2. Create a `.env` file in the root directory:
+
+**Option A: Connect to your backend (Default)**
 ```
-VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_BASE_URL=http://localhost:5001/api
 ```
+
+**Option B: Use Mock API (No backend required for testing)**
+```
+VITE_USE_MOCK_API=true
+```
+
+> **Note**: 
+> - By default, the app connects to `http://localhost:5001/api` (or the URL you specify in `VITE_API_BASE_URL`)
+> - Mock API is only used if you explicitly set `VITE_USE_MOCK_API=true`
+> - If your backend is on a different port, update `VITE_API_BASE_URL` accordingly
 
 3. Start the development server:
 ```bash
@@ -51,7 +63,8 @@ src/
 ├── context/
 │   └── AuthContext.tsx
 ├── lib/
-│   └── api.ts
+│   ├── api.ts
+│   └── mockApi.ts
 ├── routes/
 │   ├── Landing.tsx
 │   ├── Login.tsx

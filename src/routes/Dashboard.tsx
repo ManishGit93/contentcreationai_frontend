@@ -26,10 +26,25 @@ export const Dashboard: React.FC = () => {
   const fetchProposals = async () => {
     try {
       const response = await api.get('/proposals');
-      setProposals(response.data);
+      // Handle different response structures
+      let proposalsData = response.data;
+      
+      // If response.data is an object with a proposals/data/items property
+      if (proposalsData && typeof proposalsData === 'object' && !Array.isArray(proposalsData)) {
+        proposalsData = proposalsData.proposals || proposalsData.data || proposalsData.items || [];
+      }
+      
+      // Ensure it's an array
+      if (!Array.isArray(proposalsData)) {
+        console.warn('Expected array but got:', proposalsData);
+        proposalsData = [];
+      }
+      
+      setProposals(proposalsData);
     } catch (err: any) {
       setError('Failed to load proposals');
-      console.error(err);
+      console.error('Error fetching proposals:', err);
+      setProposals([]); // Set empty array on error
     } finally {
       setIsLoading(false);
     }
